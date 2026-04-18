@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------
+  # Serviço 1: O Banco de Dados PostgreSQL
+  # ----------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: volunteer_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: volunteer_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d volunteer_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------
+  # Serviço 2: A Sua API em Go
+  # ----------------------------------------
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: volunteer_api
+    environment:
+      # A string de conexão usa o nome do serviço 'db' como host
+      - DATABASE_URL=postgres://admin:secretpassword@db:5432/volunteer_db?sslmode=disable
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy # Só inicia a API quando o banco estiver pronto
+    restart: on-failure
+
+volumes:
+  pgdata: # Volume nomeado para os dados do banco não sumirem ao reiniciar
