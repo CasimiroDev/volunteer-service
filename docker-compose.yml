@@ -29,10 +29,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: volunteer_api
-    environment:
-      # A string de conexão usa o nome do serviço 'db' como host
-      - DATABASE_URL=postgres://admin:secretpassword@db:5432/volunteer_db?sslmode=disable
-      - PORT=8080
+    # Removemos o bloco 'environment' fixo e trocamos por 'env_file'
+    env_file:
+      - .env
     ports:
       - "8080:8080"
     depends_on:
